@@ -51,6 +51,9 @@ export default function App() {
   const [viewportWidth, setViewportWidth] = useState<number>(() =>
     typeof window !== 'undefined' ? window.innerWidth : 1440
   );
+  const [viewportHeight, setViewportHeight] = useState<number>(() =>
+    typeof window !== 'undefined' ? window.innerHeight : 900
+  );
 
   // Product Quick-View modal state (when clicking "Buy Now" on any Hero card)
   const [selectedProductIndex, setSelectedProductIndex] = useState<number>(3);
@@ -109,9 +112,12 @@ export default function App() {
     return () => clearIntroTimers();
   }, [runIntroSequence, clearIntroTimers]);
 
-  // Responsive viewport listener
+  // Responsive viewport listener tracking both width and height
   useEffect(() => {
-    const handleResize = () => setViewportWidth(window.innerWidth);
+    const handleResize = () => {
+      setViewportWidth(window.innerWidth);
+      setViewportHeight(window.innerHeight);
+    };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -224,7 +230,7 @@ export default function App() {
 
   const isStackPhase = introPhase !== 'ready';
 
-  // 1. Hero Headline ("The Ultimate COLLECTIONS") opacity & upward scroll exit (untouched at top!)
+  // 1. Hero Headline ("The Ultimate COLLECTIONS") opacity & upward scroll exit
   const heroTitleOpacity = isStackPhase
     ? 0
     : 1 - smoothstep(0.03, 0.32, heroScrollProgress);
@@ -257,9 +263,9 @@ export default function App() {
   return (
     <div id="top" className="relative w-full bg-white text-[#141414] select-none">
       {/* =====================================================================
-          TOP NAVIGATION BAR (Current "Fashion." Navbar — hidden during bottom-up card rise,
-          animates in smoothly when cards expand into "The Ultimate COLLECTIONS")
-         ===================================================================== */}
+           TOP NAVIGATION BAR ("Fashion." Navbar — hidden during bottom-up card rise,
+           animates in smoothly when cards expand into "The Ultimate COLLECTIONS")
+          ===================================================================== */}
       <Navbar
         isVisible={!isStackPhase}
         isScrolled={pageScrollY > 40}
@@ -271,10 +277,10 @@ export default function App() {
       />
 
       {/* =====================================================================
-          SECTION 1 & 2 PINNED STAGE:
-          - 00:00 - 00:03: Exact Bottom-Up Card Stack Rise -> Shuffle -> "The Ultimate COLLECTIONS" Hero Fan
-          - 00:04 - 00:06: Scroll-Scrubbed Center Stack -> 5-Card Diagonal Showcase Cascade + "Showcase, Sell, & acquire arts to our marketplace."
-         ===================================================================== */}
+           SECTION 1 & 2 PINNED STAGE:
+           - 00:00 - 00:03: Exact Bottom-Up Card Stack Rise -> Shuffle -> "The Ultimate COLLECTIONS" Hero Fan
+           - 00:04 - 00:06: Scroll-Scrubbed Center Stack -> 5-Card Diagonal Showcase Cascade + "Showcase, Sell, & acquire arts to our marketplace."
+          ===================================================================== */}
       <div
         ref={heroStageRef}
         className="relative w-full h-[245vh] bg-white"
@@ -284,12 +290,15 @@ export default function App() {
           <SpeechBadges
             introPhase={introPhase}
             scrollProgress={heroScrollProgress * 1.8}
+            viewportWidth={viewportWidth}
+            viewportHeight={viewportHeight}
           />
 
-          <main className="relative flex-1 w-full max-w-[1440px] mx-auto flex flex-col items-center justify-center overflow-hidden px-4 sm:px-8">
+          <main className="relative flex-1 w-full h-full flex flex-col items-center justify-center overflow-hidden px-5 sm:px-10 lg:px-[5vw]">
             {/* ---------------------------------------------------------------
-                1. HERO HEADLINE ("The Ultimate COLLECTIONS" — 100% Untouched)
-               --------------------------------------------------------------- */}
+                 1. HERO HEADLINE ("The Ultimate COLLECTIONS")
+                    Uses both vw and vh bounds so it never collides with cards on 16:9 fullscreen laptops
+                --------------------------------------------------------------- */}
             <motion.div
               initial={false}
               animate={{
@@ -297,16 +306,16 @@ export default function App() {
                 y: heroTitleY,
               }}
               transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute top-[13%] sm:top-[14.5%] left-0 right-0 flex flex-col items-center text-center z-20 pointer-events-none"
+              className="absolute top-[clamp(64px,10.5vh,124px)] left-0 right-0 flex flex-col items-center text-center z-20 pointer-events-none px-4"
             >
               <span
-                className="text-[28px] sm:text-[38px] md:text-[42px] font-normal tracking-tight text-[#141414] leading-[1.12]"
+                className="text-[clamp(22px,min(2.6vw,4.2vh),44px)] font-normal tracking-tight text-[#141414] leading-[1.1]"
                 style={{ fontFamily: "'Outfit', sans-serif" }}
               >
                 The Ultimate
               </span>
               <h1
-                className="mt-0.5 text-[42px] sm:text-[58px] md:text-[66px] font-semibold tracking-[-0.02em] text-[#141414] leading-[1.02] uppercase"
+                className="mt-0.5 text-[clamp(32px,min(4.4vw,6.8vh),74px)] font-semibold tracking-[-0.02em] text-[#141414] leading-[1.0] uppercase"
                 style={{ fontFamily: "'Outfit', sans-serif" }}
               >
                 COLLECTIONS
@@ -314,51 +323,44 @@ export default function App() {
             </motion.div>
 
             {/* ---------------------------------------------------------------
-                2. SECTION 2 LEFT EDITORIAL COLUMN ("Showcase, Sell, & acquire arts to our marketplace." at 00:05 - 00:06)
-               --------------------------------------------------------------- */}
+                 2. SECTION 2 LEFT EDITORIAL COLUMN ("Showcase, Sell, & acquire arts to our marketplace." at 00:05 - 00:06)
+                --------------------------------------------------------------- */}
             <div
               style={{
                 opacity: showcaseEnter,
                 transform: `translate3d(0, ${showcaseY}px, 0)`,
               }}
-              className={`absolute left-6 sm:left-12 md:left-16 top-1/2 -translate-y-1/2 w-full max-w-[490px] z-30 ${
+              className={`absolute left-5 sm:left-10 lg:left-[5vw] right-5 md:right-auto top-[11%] md:top-1/2 md:-translate-y-1/2 w-auto md:w-full max-w-[490px] xl:max-w-[38vw] z-30 ${
                 heroScrollProgress > 0.55 ? 'pointer-events-auto' : 'pointer-events-none'
               }`}
             >
-              <span className="text-[11px] font-bold tracking-[0.2em] uppercase text-[#71717A]">
-                E-COMMERCE
-              </span>
+              <div className="text-[11px] sm:text-[12px] xl:text-[0.85vw] font-bold tracking-[0.2em] uppercase">
+                <span className="text-[#141414]">E-</span>
+                <span className="text-[#E11D48]">COMMERCE</span>
+              </div>
 
               <h2
-                className="mt-3 text-[40px] sm:text-[54px] md:text-[62px] font-semibold tracking-[-0.03em] leading-[1.04]"
+                className="mt-2 sm:mt-3 text-[32px] sm:text-[48px] md:text-[clamp(38px,min(4.4vw,6.5vh),72px)] font-semibold tracking-[-0.035em] leading-[1.02]"
                 style={{ fontFamily: "'Outfit', sans-serif" }}
               >
                 <span className="block text-[#141414]">Showcase, Sell,</span>
+                <span className="block text-[#141414]">&amp; acquire arts to</span>
                 <span
                   className="block transition-colors duration-300"
                   style={{
                     color:
-                      heroScrollProgress > 0.72 ? '#7F1D1D' : '#A1A1AA',
-                  }}
-                >
-                  &amp; acquire arts to
-                </span>
-                <span
-                  className="block transition-colors duration-300"
-                  style={{
-                    color:
-                      heroScrollProgress > 0.82 ? '#141414' : '#D4D4D8',
+                      heroScrollProgress > 0.85 ? '#141414' : '#A1A1AA',
                   }}
                 >
                   our marketplace.
                 </span>
               </h2>
 
-              <p className="mt-5 text-[14px] sm:text-[15px] text-[#71717A] leading-[1.65] max-w-[420px]">
+              <p className="mt-3 sm:mt-5 text-[13px] sm:text-[15px] xl:text-[1.05vw] text-[#71717A] leading-[1.6] max-w-[420px] xl:max-w-[30vw]">
                 Dynamic community where artists and buyers seamlessly merge. ArtFusion brings together creators and enthusiasts to share creativity.
               </p>
 
-              <div className="mt-7 flex items-center gap-3.5">
+              <div className="mt-5 sm:mt-7 flex items-center gap-3">
                 <motion.button
                   type="button"
                   whileHover={{ scale: 1.04 }}
@@ -367,7 +369,7 @@ export default function App() {
                     const el = document.getElementById('membership-section');
                     if (el) smoothScrollToY(el.offsetTop - 20, 1.2);
                   }}
-                  className="px-6 py-3 rounded-full bg-[#141414] hover:bg-zinc-800 text-white text-[12.5px] font-semibold tracking-tight shadow-[0_12px_28px_-8px_rgba(0,0,0,0.35)] cursor-pointer"
+                  className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-full bg-[#141414] hover:bg-zinc-800 text-white text-[12px] sm:text-[13px] xl:text-[0.95vw] font-semibold tracking-tight shadow-[0_12px_28px_-8px_rgba(0,0,0,0.35)] cursor-pointer"
                 >
                   Join for $9.99/m
                 </motion.button>
@@ -380,7 +382,7 @@ export default function App() {
                     const el = document.getElementById('gateway-section');
                     if (el) smoothScrollToY(el.offsetTop - 20, 1.05);
                   }}
-                  className="px-6 py-3 rounded-full border border-zinc-200 hover:border-zinc-400 bg-white text-[#141414] text-[12.5px] font-semibold tracking-tight cursor-pointer transition-colors"
+                  className="px-5 sm:px-6 py-2.5 sm:py-3 rounded-full border border-zinc-200 hover:border-zinc-400 bg-white text-[#141414] text-[12px] sm:text-[13px] xl:text-[0.95vw] font-semibold tracking-tight cursor-pointer transition-colors"
                 >
                   Read more
                 </motion.button>
@@ -388,12 +390,12 @@ export default function App() {
             </div>
 
             {/* ---------------------------------------------------------------
-                3. UNIFIED 6-CARD CHOREOGRAPHY STAGE
-                   - Bottom Stack Rise -> Shuffle -> "The Ultimate COLLECTIONS" Hero Fan
-                   - Center Stack Gather (0.40) -> 5-Card Diagonal Showcase Cascade on Right (1.00)
-               --------------------------------------------------------------- */}
+                 3. UNIFIED 6-CARD CHOREOGRAPHY STAGE
+                    - Bottom Stack Rise -> Shuffle -> "The Ultimate COLLECTIONS" Hero Fan
+                    - Center Stack Gather (0.40) -> 5-Card Diagonal Showcase Cascade on Right (1.00)
+                --------------------------------------------------------------- */}
             <div
-              className="relative w-full h-[390px] sm:h-[450px] flex items-center justify-center z-20 mt-6 sm:mt-8"
+              className="relative w-full h-full flex items-center justify-center z-20"
               data-testid="card-choreography-stage"
             >
               {PRODUCTS.map((product, idx) => {
@@ -407,7 +409,8 @@ export default function App() {
                   virtualProduct,
                   introPhase,
                   heroScrollProgress,
-                  viewportWidth
+                  viewportWidth,
+                  viewportHeight
                 );
 
                 const isHovered =
@@ -486,10 +489,10 @@ export default function App() {
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.8 }}
                             transition={{ duration: 0.2 }}
-                            className={`absolute top-3.5 z-10 ${
+                            className={`absolute top-2 sm:top-3.5 z-10 ${
                               idx < 3 && heroScrollProgress < 0.2
-                                ? 'right-5'
-                                : 'right-3.5'
+                                ? 'left-2 sm:left-auto sm:right-5'
+                                : 'right-2 sm:right-3.5'
                             }`}
                           >
                             <button
@@ -499,7 +502,7 @@ export default function App() {
                                 handleSelectProductDetail(idx);
                               }}
                               aria-label={`Buy ${product.name} now`}
-                              className="px-3 py-1 rounded-full bg-white/95 hover:bg-white text-[#141414] text-[10px] font-semibold tracking-tight shadow-sm transition-transform hover:scale-105 cursor-pointer whitespace-nowrap shrink-0"
+                              className="px-2 sm:px-3.5 py-0.5 sm:py-1.5 rounded-full bg-white/95 hover:bg-white text-[#141414] text-[8px] sm:text-[11px] lg:text-[clamp(10.5px,0.75vw,13px)] font-semibold tracking-tight shadow-sm transition-transform hover:scale-105 cursor-pointer whitespace-nowrap shrink-0"
                             >
                               Buy Now
                             </button>
@@ -516,10 +519,10 @@ export default function App() {
                 style={{ opacity: showcaseEnter }}
                 className="pointer-events-none hidden md:block absolute inset-0 z-[75]"
               >
-                <div className="absolute left-[49%] top-[4%] -rotate-6 px-4 py-1.5 rounded-full bg-[#881337] text-white text-[12.5px] font-medium shadow-lg">
+                <div className="absolute left-[49%] top-[16%] -rotate-6 px-4 py-1.5 rounded-full bg-[#881337] text-white text-[12.5px] font-medium shadow-lg">
                   @howard
                 </div>
-                <div className="absolute left-[74%] top-[28%] -rotate-3 px-4 py-1.5 rounded-full bg-[#141414] text-white text-[12.5px] font-medium shadow-lg">
+                <div className="absolute left-[74%] top-[36%] -rotate-3 px-4 py-1.5 rounded-full bg-[#141414] text-white text-[12.5px] font-medium shadow-lg">
                   @robin
                 </div>
               </div>
@@ -537,7 +540,7 @@ export default function App() {
                     setCascadeRotationOffset((prev) => (prev + 1) % PRODUCTS.length)
                   }
                   aria-label="Cycle cascade cards up"
-                  className="w-8 h-8 rounded-full border border-zinc-200 bg-white hover:border-zinc-400 flex items-center justify-center text-[#141414] shadow-2xs cursor-pointer"
+                  className="w-9 h-9 rounded-full border border-zinc-200 bg-white hover:border-zinc-400 flex items-center justify-center text-[#141414] shadow-2xs cursor-pointer"
                 >
                   <ChevronUp className="w-4 h-4" />
                 </button>
@@ -549,7 +552,7 @@ export default function App() {
                     )
                   }
                   aria-label="Cycle cascade cards down"
-                  className="w-8 h-8 rounded-full border border-zinc-200 bg-white hover:border-zinc-400 flex items-center justify-center text-[#141414] shadow-2xs cursor-pointer"
+                  className="w-9 h-9 rounded-full border border-zinc-200 bg-white hover:border-zinc-400 flex items-center justify-center text-[#141414] shadow-2xs cursor-pointer"
                 >
                   <ChevronDown className="w-4 h-4" />
                 </button>
@@ -557,8 +560,9 @@ export default function App() {
             </div>
 
             {/* ---------------------------------------------------------------
-                4. HERO BOTTOM COPY & "Explore More" CTA (100% Untouched)
-               --------------------------------------------------------------- */}
+                 4. HERO BOTTOM COPY & "Explore More" CTA
+                    Scaled proportionally with clamp() so it stays balanced on all viewports
+                --------------------------------------------------------------- */}
             <motion.div
               initial={false}
               animate={{
@@ -566,13 +570,13 @@ export default function App() {
                 y: heroFooterY,
               }}
               transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
-              className={`absolute bottom-[6.5%] sm:bottom-[7.5%] left-0 right-0 flex flex-col items-center text-center z-20 ${
+              className={`absolute bottom-[clamp(22px,5.2vh,72px)] left-0 right-0 flex flex-col items-center text-center z-20 px-4 ${
                 !isStackPhase && heroScrollProgress < 0.2
                   ? 'pointer-events-auto'
                   : 'pointer-events-none'
               }`}
             >
-              <p className="text-[12.5px] sm:text-[13.5px] leading-[1.6] text-[#3F3F46] max-w-[390px] font-medium">
+              <p className="text-[clamp(12px,min(0.95vw,1.85vh),16px)] leading-[1.55] text-[#3F3F46] max-w-[clamp(310px,30vw,480px)] font-medium">
                 We Do Not Divide Our Collections To Seasons We Create
                 <br />
                 New Models Every Week, And We In A Few Items
@@ -582,7 +586,7 @@ export default function App() {
                 whileHover={{ scale: 1.04 }}
                 whileTap={{ scale: 0.96 }}
                 onClick={handleExploreMore}
-                className="mt-4 px-6 py-2.5 rounded-full bg-[#1C1C1E] hover:bg-[#2C2C2E] text-white text-[12px] font-medium tracking-wide shadow-[0_10px_24px_-6px_rgba(0,0,0,0.35)] cursor-pointer whitespace-nowrap shrink-0"
+                className="mt-3.5 sm:mt-4 px-[clamp(22px,1.8vw,32px)] py-[clamp(9px,1.15vh,14px)] rounded-full bg-[#1C1C1E] hover:bg-[#2C2C2E] text-white text-[clamp(12px,0.9vw,15px)] font-medium tracking-wide shadow-[0_10px_24px_-6px_rgba(0,0,0,0.35)] cursor-pointer whitespace-nowrap shrink-0"
               >
                 Explore More
               </motion.button>
@@ -592,8 +596,8 @@ export default function App() {
       </div>
 
       {/* =====================================================================
-          POST-HERO SECTIONS (00:07 - 00:42 OF ATTACHED REFERENCE VIDEO)
-         ===================================================================== */}
+           POST-HERO SECTIONS (00:07 - 00:42 OF ATTACHED REFERENCE VIDEO)
+          ===================================================================== */}
       {/* Section 3: "Gateway to artist people." + Burnt-Orange Banner + "Trusted by the best." */}
       <ShowcaseGatewaySection />
 
@@ -609,8 +613,8 @@ export default function App() {
       />
 
       {/* =====================================================================
-          SHOPPING BAG SLIDE-OVER DRAWER
-         ===================================================================== */}
+           SHOPPING BAG SLIDE-OVER DRAWER
+          ===================================================================== */}
       <CartDrawer
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
@@ -620,8 +624,8 @@ export default function App() {
       />
 
       {/* =====================================================================
-          PRODUCT QUICK-VIEW MODAL (When clicking "Buy Now" on any Hero Card)
-         ===================================================================== */}
+           PRODUCT QUICK-VIEW MODAL (When clicking "Buy Now" on any Hero Card)
+          ===================================================================== */}
       <AnimatePresence>
         {isProductModalOpen && (
           <>
@@ -641,7 +645,7 @@ export default function App() {
               initial={{ opacity: 0, scale: 0.94, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.94, y: 20 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-[760px] bg-white rounded-[32px] p-6 sm:p-8 z-50 shadow-2xl grid grid-cols-1 md:grid-cols-2 gap-7 items-center"
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-[760px] max-h-[90vh] overflow-y-auto bg-white rounded-[32px] p-6 sm:p-8 z-50 shadow-2xl grid grid-cols-1 md:grid-cols-2 gap-7 items-center"
             >
               <button
                 type="button"
@@ -652,7 +656,7 @@ export default function App() {
                 <X className="w-4 h-4" />
               </button>
 
-              <div className="h-80 sm:h-96 rounded-[24px] overflow-hidden bg-zinc-100 shadow-md">
+              <div className="h-72 sm:h-96 rounded-[24px] overflow-hidden bg-zinc-100 shadow-md">
                 <img
                   src={activeProduct.image}
                   alt={activeProduct.name}
@@ -738,8 +742,8 @@ export default function App() {
       </AnimatePresence>
 
       {/* =====================================================================
-          STUDIO CONTACT MODAL
-         ===================================================================== */}
+           STUDIO CONTACT MODAL
+          ===================================================================== */}
       <AnimatePresence>
         {isContactOpen && (
           <>
@@ -759,7 +763,7 @@ export default function App() {
               initial={{ opacity: 0, scale: 0.95, y: 16 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 16 }}
-              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[420px] bg-white rounded-3xl p-7 z-50 shadow-2xl"
+              className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[92vw] max-w-[420px] bg-white rounded-3xl p-7 z-50 shadow-2xl"
             >
               <div className="flex items-center justify-between pb-4 border-b border-zinc-100">
                 <h3

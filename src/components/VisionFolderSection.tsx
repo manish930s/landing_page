@@ -65,11 +65,11 @@ const VISION_CARDS: VisionCardItem[] = [
   },
   {
     id: 'vc-6',
-    title: 'Urban Archive',
+    title: 'Cobalt Eye Study',
     artist: '@reatha',
-    image: '/src/assets/images/card_summer_cloths_yellow_1794470938002.jpg',
+    image: '/src/assets/images/bento_cobalt_art_sculpture_1794472950567.jpg',
     businessImage: '/src/assets/images/gateway_sunglasses_banner_1794472948136.jpg',
-    accent: '#F59E0B',
+    accent: '#2563EB',
   },
 ];
 
@@ -84,7 +84,7 @@ const WAVE_IMAGES = [
   '/src/assets/images/card_woolan_fashion_studio_1794470942757.jpg',
   '/src/assets/images/card_jogger_outfit_teal_1794470945448.jpg',
   '/src/assets/images/card_model_outfit_loft_1794470944858.jpg',
-  '/src/assets/images/gateway_sunglasses_banner_1794472948136.jpg',
+  '/src/assets/images/bento_cobalt_art_sculpture_1794472950567.jpg',
 ];
 
 const CREATIVE_TOOLS = [
@@ -99,17 +99,21 @@ const CREATIVE_TOOLS = [
 
 export const VisionFolderSection: React.FC = () => {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const waveSectionRef = useRef<HTMLDivElement | null>(null);
   const [progress, setProgress] = useState(0);
-  const [waveProgress, setWaveProgress] = useState(0.5);
   const [activeFolderTab, setActiveFolderTab] = useState<'business' | 'personal'>('personal');
   const [activeToolId, setActiveToolId] = useState<string>('brush');
   const [viewportWidth, setViewportWidth] = useState<number>(() =>
     typeof window !== 'undefined' ? window.innerWidth : 1440
   );
+  const [viewportHeight, setViewportHeight] = useState<number>(() =>
+    typeof window !== 'undefined' ? window.innerHeight : 900
+  );
 
   useEffect(() => {
-    const onResize = () => setViewportWidth(window.innerWidth);
+    const onResize = () => {
+      setViewportWidth(window.innerWidth);
+      setViewportHeight(window.innerHeight);
+    };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
   }, []);
@@ -122,12 +126,6 @@ export const VisionFolderSection: React.FC = () => {
         const raw = clamp(-rect.top / scrollable, 0, 1);
         setProgress(raw);
       }
-      if (waveSectionRef.current) {
-        const wRect = waveSectionRef.current.getBoundingClientRect();
-        const total = window.innerHeight + wRect.height;
-        const wRaw = clamp((window.innerHeight - wRect.top) / Math.max(1, total), 0, 1);
-        setWaveProgress(wRaw);
-      }
     };
 
     handleScroll();
@@ -135,9 +133,19 @@ export const VisionFolderSection: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const scale = viewportWidth < 768 ? 0.62 : viewportWidth < 1100 ? 0.82 : 1;
+  // Scale proportionally with both viewportWidth and viewportHeight so normal preview, fullscreen laptops, and mobile devices have clean proportions
+  const scale =
+    viewportWidth < 768
+      ? clamp(Math.min(viewportWidth / 640, viewportHeight / 820), 0.46, 0.65)
+      : viewportWidth < 1024
+      ? clamp(Math.min(viewportWidth / 1100, viewportHeight / 820), 0.68, 0.85)
+      : clamp(
+          Math.min(viewportWidth / 1400, (viewportHeight / 820) * 1.05),
+          0.82,
+          1.75
+        );
 
-  // Stage 4A (0.00 -> 0.30): Giant 3-line statement + center stack
+  // Stage 4A (0.00 -> 0.30): Giant 3-line statement + center stack (sec_14.png)
   const statementOpacity = 1 - smoothstep(0.18, 0.34, progress);
   const statementScale = lerp(1, 0.94, smoothstep(0.16, 0.34, progress));
 
@@ -146,7 +154,7 @@ export const VisionFolderSection: React.FC = () => {
   const cascadeExit = smoothstep(0.58, 0.78, progress);
   const cascadeBadgeOpacity = cascadeEnter * (1 - cascadeExit);
 
-  // Stage 4C (0.64 -> 1.00): "Our vision for any art technology." + 3x2 Folder Grid
+  // Stage 4C (0.64 -> 1.00): "Our vision for any art technology." + 3x2 Folder Grid (sec_19.png)
   const folderStageOpacity = smoothstep(0.64, 0.84, progress);
   const folderStageY = lerp(36, 0, smoothstep(0.64, 0.84, progress));
 
@@ -159,10 +167,13 @@ export const VisionFolderSection: React.FC = () => {
         ref={containerRef}
         className="relative w-full h-[300vh] bg-white select-none"
       >
-        <div className="sticky top-0 w-full h-screen overflow-hidden flex items-center justify-center px-4 sm:px-8 md:px-14">
-          <div className="relative w-full max-w-[1260px] h-[640px] flex items-center justify-center mt-8">
+        <div className="sticky top-0 w-full h-screen overflow-hidden flex items-center justify-center px-6 sm:px-10 lg:px-[5vw]">
+          <div
+            style={{ height: `${Math.round(540 * scale)}px` }}
+            className="relative w-full flex items-center justify-center mt-6"
+          >
             {/* ---------------------------------------------------------------
-                STAGE 4A BACKGROUND: Giant 3-Line Editorial Typography (00:13 - 00:14)
+                STAGE 4A BACKGROUND: Giant 3-Line Editorial Typography (00:13 - 00:14, sec_14.png)
                --------------------------------------------------------------- */}
             <div
               style={{
@@ -172,7 +183,7 @@ export const VisionFolderSection: React.FC = () => {
               className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center z-10 px-4"
             >
               <p
-                className="text-[28px] sm:text-[44px] md:text-[54px] font-semibold tracking-[-0.03em] leading-[1.14] text-[#141414] max-w-[1040px]"
+                className="text-[28px] sm:text-[44px] md:text-[4.1vw] font-semibold tracking-[-0.03em] leading-[1.12] text-[#141414] max-w-[86vw]"
                 style={{ fontFamily: "'Outfit', sans-serif" }}
               >
                 <span className="text-[#D4D4D8]">Whether </span>
@@ -181,28 +192,29 @@ export const VisionFolderSection: React.FC = () => {
                 <br />
                 <span>or buyer seeking </span>
                 <span className="text-[#EA580C]">unique pieces</span>
+                <span> connects</span>
                 <br />
-                <span>connects you to world of </span>
+                <span>you to world of </span>
                 <span className="text-[#D4D4D8]">creativity commerce.</span>
               </p>
 
               {/* Floating "@alician" (left black bubble) & "@andrea" (right blue bubble) */}
               <div
                 style={{ opacity: statementOpacity }}
-                className="hidden sm:flex absolute left-[24%] top-[43%] -rotate-6 px-4 py-1.5 rounded-full bg-[#141414] text-white text-[12.5px] font-medium shadow-lg"
+                className="hidden sm:flex absolute left-[22%] top-[44%] -rotate-6 px-4 py-1.5 rounded-full bg-[#141414] text-white text-[12.5px] font-medium shadow-lg z-40"
               >
                 @alician
               </div>
               <div
                 style={{ opacity: statementOpacity }}
-                className="hidden sm:flex absolute right-[23%] top-[47%] rotate-6 px-4 py-1.5 rounded-full bg-[#2563EB] text-white text-[12.5px] font-medium shadow-lg"
+                className="hidden sm:flex absolute right-[21%] top-[47%] rotate-6 px-4 py-1.5 rounded-full bg-[#2563EB] text-white text-[12.5px] font-medium shadow-lg z-40"
               >
                 @andrea
               </div>
             </div>
 
             {/* ---------------------------------------------------------------
-                STAGE 4C LEFT COLUMN & RIGHT FOLDER FRAME ("Our vision for any art technology.")
+                STAGE 4C LEFT COLUMN & RIGHT FOLDER FRAME ("Our vision for any art technology." sec_19.png)
                --------------------------------------------------------------- */}
             <div
               style={{
@@ -214,24 +226,24 @@ export const VisionFolderSection: React.FC = () => {
               }`}
             >
               {/* Left Column: Eye Icon + "Our vision for any art technology." + 7 Floating Tool Icons */}
-              <div className="w-full lg:w-[36%] flex flex-col items-start justify-between h-full py-10">
+              <div className="w-full lg:w-[35%] flex flex-col items-start justify-between h-full py-4">
                 <div>
-                  <div className="w-11 h-11 rounded-2xl border border-zinc-200 bg-zinc-50 flex items-center justify-center text-[#141414] shadow-xs">
+                  <div className="w-12 h-12 rounded-2xl border border-zinc-200 bg-white flex items-center justify-center text-[#141414] shadow-xs">
                     <Eye className="w-5 h-5" />
                   </div>
 
                   <h2
-                    className="mt-6 text-[36px] sm:text-[46px] md:text-[52px] font-semibold tracking-[-0.03em] leading-[1.06] text-[#141414]"
+                    className="mt-6 text-[36px] sm:text-[46px] lg:text-[3.8vw] font-semibold tracking-[-0.03em] leading-[1.04] text-[#141414]"
                     style={{ fontFamily: "'Outfit', sans-serif" }}
                   >
                     Our vision
                     <br />
                     for any art
                     <br />
-                    technology.
+                    <span className="text-[#A1A1AA]">technology.</span>
                   </h2>
 
-                  <p className="mt-4 text-[13.5px] sm:text-[14.5px] text-[#71717A] leading-[1.65] max-w-[360px]">
+                  <p className="mt-4 text-[13.5px] sm:text-[14.5px] xl:text-[1.02vw] text-[#71717A] leading-[1.65] max-w-[360px] xl:max-w-[26vw]">
                     Every piece of art tells a story. Echoes of Expression allows artists to showcase their personal journeys through their work.
                   </p>
 
@@ -244,14 +256,14 @@ export const VisionFolderSection: React.FC = () => {
                         prev === 'personal' ? 'business' : 'personal'
                       )
                     }
-                    className="mt-6 px-5 py-2.5 rounded-full border border-zinc-200 hover:border-zinc-400 bg-white text-[#141414] text-[12.5px] font-semibold tracking-tight shadow-xs cursor-pointer transition-colors"
+                    className="mt-6 px-6 py-2.5 rounded-full border border-zinc-200 hover:border-zinc-400 bg-white text-[#141414] text-[12.5px] font-semibold tracking-tight shadow-xs cursor-pointer transition-colors"
                   >
                     Read more
                   </motion.button>
                 </div>
 
-                {/* Bottom-Left 7 Floating Outlined Creative Tool Icons (00:18 - 00:20) */}
-                <div className="hidden sm:flex flex-wrap items-center gap-3 pt-6 max-w-[340px]">
+                {/* Bottom-Left 7 Floating Outlined Creative Tool Icons (00:18 - 00:20, sec_19.png) */}
+                <div className="hidden sm:flex flex-wrap items-center gap-3 pt-4 max-w-[380px]">
                   {CREATIVE_TOOLS.map(({ id, Icon, label, rotate }) => {
                     const isSelected = activeToolId === id;
                     return (
@@ -277,91 +289,95 @@ export const VisionFolderSection: React.FC = () => {
                 </div>
               </div>
 
-              {/* Right Column: Interactive Folder Container Backdrop & Tab Bar (00:17 - 00:20) */}
-              <div className="hidden lg:flex flex-col w-[61%] h-[530px] justify-start">
-                {/* Folder Top Tabs Row: "Business" | Dark Notched Folder Tab "Personal" | "+ Create" */}
-                <div className="flex items-center justify-between w-full mb-3.5 px-2">
-                  <div className="flex items-center gap-4">
-                    <button
-                      type="button"
-                      onClick={() => setActiveFolderTab('business')}
-                      className={`px-5 py-2 rounded-full text-[13px] font-semibold transition-colors cursor-pointer ${
-                        activeFolderTab === 'business'
-                          ? 'bg-[#141414] text-white shadow-sm'
-                          : 'text-[#71717A] hover:text-[#141414]'
-                      }`}
-                    >
-                      Business
-                    </button>
-
-                    {/* Signature Dark Folder-Tab Shape for "Personal" */}
-                    <button
-                      type="button"
-                      onClick={() => setActiveFolderTab('personal')}
-                      className={`relative px-7 py-2.5 rounded-t-2xl rounded-b-lg text-[13px] font-semibold transition-all cursor-pointer flex items-center gap-3 ${
-                        activeFolderTab === 'personal'
-                          ? 'bg-[#141414] text-white shadow-md min-w-[210px]'
-                          : 'bg-zinc-100 text-[#52525B] hover:bg-zinc-200 min-w-[160px]'
-                      }`}
-                    >
-                      <span>Personal</span>
-                      <span className="ml-auto w-2 h-2 rounded-full bg-[#EA580C]" />
-                    </button>
-                  </div>
-
+              {/* Right Column: Interactive Folder Container Backdrop & Full-Width Dark Notched Folder Header (sec_19.png) */}
+              <div
+                style={{ height: `${Math.round(520 * scale)}px` }}
+                className="hidden lg:flex flex-col w-[62%] justify-start"
+              >
+                {/* Exact Folder Header Bar from sec_19.png: "Business" light tab on left + Full-Width Dark Notched "Personal" Folder Bar */}
+                <div className="relative flex items-end w-full h-14 mb-3">
+                  {/* Back Left Light Folder Tab: "Business" */}
                   <button
                     type="button"
-                    onClick={() =>
-                      setActiveFolderTab((prev) =>
-                        prev === 'personal' ? 'business' : 'personal'
-                      )
-                    }
-                    className="px-4 py-2 rounded-full border border-zinc-200 hover:border-zinc-400 bg-white text-[#141414] text-[12.5px] font-semibold flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                    onClick={() => setActiveFolderTab('business')}
+                    className={`h-12 px-7 rounded-t-[20px] text-[13.5px] font-semibold transition-colors cursor-pointer flex items-center ${
+                      activeFolderTab === 'business'
+                        ? 'bg-[#18181B] text-white z-20'
+                        : 'bg-[#F4F4F5] text-[#71717A] hover:text-[#141414] z-10'
+                    }`}
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Create</span>
+                    Business
                   </button>
+
+                  {/* Front Full-Width Dark Notched Folder Bar: "Personal" + "+ Create" (sec_19.png) */}
+                  <div
+                    onClick={() => setActiveFolderTab('personal')}
+                    className={`flex-1 h-13 -ml-2 rounded-t-[22px] rounded-tr-[24px] px-7 flex items-center justify-between cursor-pointer transition-colors shadow-md ${
+                      activeFolderTab === 'personal'
+                        ? 'bg-[#18181B] text-white z-20'
+                        : 'bg-zinc-200 text-[#141414] z-10'
+                    }`}
+                  >
+                    <span className="text-[14px] font-semibold tracking-tight">
+                      Personal
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setActiveFolderTab((prev) =>
+                          prev === 'personal' ? 'business' : 'personal'
+                        );
+                      }}
+                      className="px-4 py-1.5 rounded-full bg-white text-[#141414] text-[12px] font-semibold flex items-center gap-1.5 cursor-pointer shadow-xs hover:bg-zinc-100"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Create</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Folder Body Surface where the 6 cards land in a 3x2 grid */}
-                <div className="w-full flex-1 rounded-[32px] bg-[#FAFAFA] border border-zinc-200/85 shadow-inner" />
+                <div className="w-full flex-1 rounded-b-[32px] rounded-tl-[24px] bg-[#FAFAFA]/70 border border-zinc-200/75" />
               </div>
             </div>
 
             {/* ---------------------------------------------------------------
                 UNIFIED 6-CARD CHOREOGRAPHY LAYER
                 Interpolates smoothly across:
-                  Stage 4A (0.00): Center Stack
+                  Stage 4A (0.00): Center Diagonally-Offset Stack (sec_14.png)
                   Stage 4B (0.45): 6-Card Diagonal Cascade (Card 1 = "Where Art Meets Market" white card)
-                  Stage 4C (0.90): Symmetrical 3x2 Grid inside Right Folder Container
+                  Stage 4C (0.90): Symmetrical 3x2 Grid inside Right Folder Container (sec_19.png)
                --------------------------------------------------------------- */}
             <div className="pointer-events-none relative w-full h-full flex items-center justify-center z-20">
               {VISION_CARDS.map((card, idx) => {
-                // Stage 4A: Center vertical stack
-                const stackX = (idx - 2.5) * 4 * scale;
-                const stackY = (idx - 2.5) * 5 * scale;
-                const stackRot = (idx - 2.5) * 2.5;
-                const stackW = 220 * scale;
-                const stackH = 264 * scale;
+                // Stage 4A: Center diagonal stack (sec_14.png shows cards fanned upward-right behind the front card)
+                const stackX = (2.5 - idx) * -12 * scale;
+                const stackY = (2.5 - idx) * -12 * scale;
+                const stackRot = (idx - 2.5) * 1.4;
+                const stackW = 225 * scale;
+                const stackH = 268 * scale;
 
                 // Stage 4B: 6-Card Diagonal Cascade across viewport (top-left to bottom-right)
                 const cascadeX = (-425 + idx * 170) * scale;
                 const cascadeY = (-135 + idx * 54) * scale;
-                const cascadeW = 196 * scale;
-                const cascadeH = 232 * scale;
+                const cascadeW = 198 * scale;
+                const cascadeH = 234 * scale;
 
-                // Stage 4C: Symmetrical 3x2 Grid centered inside Right Folder Container
+                // Stage 4C: Symmetrical 3x2 Grid centered inside Right Folder Container (w-[62%] on right of 90vw container -> center offset = +19% of 90vw = +0.171 * viewportWidth)
                 const col = idx % 3;
                 const row = Math.floor(idx / 3);
-                const gridOriginX = viewportWidth >= 1024 ? 248 * scale : 0;
-                const gridOriginY = viewportWidth >= 1024 ? 26 * scale : 110 * scale;
-                const gridPitchX = 224 * scale;
-                const gridPitchY = 204 * scale;
+                const gridOriginX =
+                  viewportWidth >= 1024 ? viewportWidth * 0.171 : 0;
+                const gridOriginY = viewportWidth >= 1024 ? 28 * scale : 110 * scale;
+                const gridPitchX = 236 * scale;
+                const gridPitchY = 208 * scale;
 
                 const folderX = gridOriginX + (col - 1) * gridPitchX;
                 const folderY = gridOriginY + (row - 0.5) * gridPitchY;
-                const folderW = 200 * scale;
-                const folderH = 184 * scale;
+                const folderW = 216 * scale;
+                const folderH = 192 * scale;
 
                 let x = stackX;
                 let y = stackY;
@@ -453,88 +469,111 @@ export const VisionFolderSection: React.FC = () => {
       </section>
 
       {/* ===================================================================
-          SECTION 5: "You will find yourself among us" DUAL-ARC COMMUNITY WAVE (00:21 - 00:23)
+          SECTION 5: "You will find yourself among us" CONTINUOUS ANIMATED WAVE (00:21 - 00:23, sec_22.png)
          =================================================================== */}
       <section
-        ref={waveSectionRef}
-        className="relative w-full bg-white py-28 overflow-hidden select-none"
+        className="relative w-full bg-white py-28 sm:py-32 overflow-hidden select-none"
       >
-        <div className="max-w-[1440px] mx-auto flex flex-col items-center">
-          {/* Top Arched Wave of 11 Floating Art Cards */}
-          <div className="relative w-full flex items-center justify-center gap-3 sm:gap-5 px-4 overflow-visible">
-            {WAVE_IMAGES.map((src, i) => {
-              const norm = i - (WAVE_IMAGES.length - 1) / 2;
-              const archY = Math.sin((i / (WAVE_IMAGES.length - 1)) * Math.PI) * -42;
-              const scrollDriftX = (waveProgress - 0.5) * -90;
-              const tilt = norm * 2.2;
-              return (
-                <motion.div
-                  key={`top-wave-${i}`}
-                  style={{
-                    transform: `translate3d(${scrollDriftX}px, ${archY}px, 0) rotate(${tilt}deg)`,
-                  }}
-                  whileHover={{ scale: 1.12, y: archY - 10, zIndex: 30 }}
-                  className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden shadow-md border border-zinc-100 shrink-0 bg-zinc-100 cursor-pointer"
+        <div className="w-full flex flex-col items-center">
+          {/* Top Continuously Moving Wave of Art Cards (gliding right-to-left with gentle arch bob) */}
+          <div className="relative w-full overflow-hidden py-12">
+            <div className="flex items-center w-max animate-wave-left">
+              {[0, 1].map((dup) => (
+                <div
+                  key={`top-wave-track-${dup}`}
+                  className="flex items-center gap-4 sm:gap-5 lg:gap-[1.35vw] pr-4 sm:pr-5 lg:pr-[1.35vw]"
                 >
-                  <img
-                    src={src}
-                    alt={`Community artwork ${i + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </motion.div>
-              );
-            })}
+                  {WAVE_IMAGES.map((src, i) => {
+                    const archY = Math.round(
+                      Math.sin((i / (WAVE_IMAGES.length - 1)) * Math.PI) * -36
+                    );
+                    const tilt = ((i % 5) - 2) * 1.8;
+                    return (
+                      <div
+                        key={`top-wave-${dup}-${i}`}
+                        style={
+                          {
+                            '--arch-y': `${archY}px`,
+                            '--card-tilt': `${tilt}deg`,
+                            animationDelay: `${i * 0.28}s`,
+                          } as React.CSSProperties
+                        }
+                        className="animate-wave-bob w-24 h-28 sm:w-28 sm:h-32 lg:w-[7.6vw] lg:h-[8.8vw] rounded-[22px] overflow-hidden shadow-[0_14px_30px_-10px_rgba(0,0,0,0.18)] border border-zinc-100 shrink-0 bg-zinc-100 cursor-pointer hover:scale-110 transition-transform duration-300"
+                      >
+                        <img
+                          src={src}
+                          alt={`Community artwork ${i + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Center Editorial Statement ("You will find yourself among us") */}
-          <div className="my-16 sm:my-20 px-4 text-center max-w-[680px] z-10">
+          {/* Center Editorial Statement ("You will find yourself among us" matching sec_22.png) */}
+          <div className="my-10 sm:my-14 px-6 text-center max-w-[820px] z-10">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, amount: 0.5 }}
               transition={{ duration: 0.6 }}
-              className="text-[36px] sm:text-[52px] md:text-[60px] font-semibold tracking-[-0.03em] leading-[1.06] text-[#141414]"
+              className="text-[38px] sm:text-[54px] md:text-[4.6vw] font-semibold tracking-[-0.03em] leading-[1.04] text-[#141414]"
               style={{ fontFamily: "'Outfit', sans-serif" }}
             >
               You will find yourself
               <br />
-              among us
+              <span className="text-[#A1A1AA]">among us</span>
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 14 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, amount: 0.5 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="mt-4 text-[14px] sm:text-[15px] text-[#71717A] leading-relaxed max-w-[440px] mx-auto"
+              className="mt-4 text-[14px] sm:text-[15px] xl:text-[1.08vw] text-[#71717A] leading-relaxed max-w-[460px] xl:max-w-[32vw] mx-auto"
             >
               Dive into a dynamic community where artists and buyers seamlessly merge.
             </motion.p>
           </div>
 
-          {/* Bottom Inverted Arched Wave of 11 Floating Art Cards */}
-          <div className="relative w-full flex items-center justify-center gap-3 sm:gap-5 px-4 overflow-visible">
-            {[...WAVE_IMAGES].reverse().map((src, i) => {
-              const norm = i - (WAVE_IMAGES.length - 1) / 2;
-              const archY = Math.sin((i / (WAVE_IMAGES.length - 1)) * Math.PI) * 42;
-              const scrollDriftX = (waveProgress - 0.5) * 90;
-              const tilt = -norm * 2.2;
-              return (
-                <motion.div
-                  key={`bottom-wave-${i}`}
-                  style={{
-                    transform: `translate3d(${scrollDriftX}px, ${archY}px, 0) rotate(${tilt}deg)`,
-                  }}
-                  whileHover={{ scale: 1.12, y: archY - 10, zIndex: 30 }}
-                  className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-2xl overflow-hidden shadow-md border border-zinc-100 shrink-0 bg-zinc-100 cursor-pointer"
+          {/* Bottom Continuously Moving Wave of Art Cards (gliding left-to-right with gentle arch bob) */}
+          <div className="relative w-full overflow-hidden py-12">
+            <div className="flex items-center w-max animate-wave-right">
+              {[0, 1].map((dup) => (
+                <div
+                  key={`bottom-wave-track-${dup}`}
+                  className="flex items-center gap-4 sm:gap-5 lg:gap-[1.35vw] pr-4 sm:pr-5 lg:pr-[1.35vw]"
                 >
-                  <img
-                    src={src}
-                    alt={`Creator showcase ${i + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </motion.div>
-              );
-            })}
+                  {[...WAVE_IMAGES].reverse().map((src, i) => {
+                    const archY = Math.round(
+                      Math.sin((i / (WAVE_IMAGES.length - 1)) * Math.PI) * 36
+                    );
+                    const tilt = -((i % 5) - 2) * 1.8;
+                    return (
+                      <div
+                        key={`bottom-wave-${dup}-${i}`}
+                        style={
+                          {
+                            '--arch-y': `${archY}px`,
+                            '--card-tilt': `${tilt}deg`,
+                            animationDelay: `${i * 0.32}s`,
+                          } as React.CSSProperties
+                        }
+                        className="animate-wave-bob w-24 h-28 sm:w-28 sm:h-32 lg:w-[7.6vw] lg:h-[8.8vw] rounded-[22px] overflow-hidden shadow-[0_14px_30px_-10px_rgba(0,0,0,0.18)] border border-zinc-100 shrink-0 bg-zinc-100 cursor-pointer hover:scale-110 transition-transform duration-300"
+                      >
+                        <img
+                          src={src}
+                          alt={`Creator showcase ${i + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

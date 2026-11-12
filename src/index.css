@@ -25,8 +25,90 @@
   }
 }
 
+@keyframes partnerMarquee {
+  0% {
+    transform: translate3d(0%, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes partnerMarqueeReverse {
+  0% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0%, 0, 0);
+  }
+}
+
+@keyframes waveSlideLeft {
+  0% {
+    transform: translate3d(0%, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+@keyframes waveSlideRight {
+  0% {
+    transform: translate3d(-50%, 0, 0);
+  }
+  100% {
+    transform: translate3d(0%, 0, 0);
+  }
+}
+
+@keyframes waveBob {
+  0%,
+  100% {
+    transform: translateY(var(--arch-y, 0px)) rotate(var(--card-tilt, 0deg));
+  }
+  50% {
+    transform: translateY(calc(var(--arch-y, 0px) - 14px)) rotate(calc(var(--card-tilt, 0deg) * -0.5));
+  }
+}
+
 .animate-art-marquee {
   animation: artMarquee 22s linear infinite;
+  will-change: transform;
+}
+
+.animate-partner-marquee {
+  animation: partnerMarquee 20s linear infinite;
+  will-change: transform;
+}
+
+.animate-partner-marquee-reverse {
+  animation: partnerMarqueeReverse 20s linear infinite;
+  will-change: transform;
+}
+
+.animate-partner-marquee:hover,
+.animate-partner-marquee-reverse:hover {
+  animation-play-state: paused;
+}
+
+.animate-wave-left {
+  animation: waveSlideLeft 34s linear infinite;
+  will-change: transform;
+}
+
+.animate-wave-right {
+  animation: waveSlideRight 34s linear infinite;
+  will-change: transform;
+}
+
+.animate-wave-left:hover,
+.animate-wave-right:hover {
+  animation-play-state: paused;
+}
+
+.animate-wave-bob {
+  animation: waveBob 4.8s ease-in-out infinite;
+  will-change: transform;
 }
 
 ::-webkit-scrollbar {

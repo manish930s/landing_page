@@ -51,12 +51,53 @@ export function smoothstep(edge0: number, edge1: number, x: number): number {
 }
 
 /**
- * Computes responsive scale factor relative to a 1360px reference canvas width.
+ * Computes a responsive scale factor that respects BOTH viewportWidth and viewportHeight.
+ * This ensures that on wide-but-short fullscreen laptop screens (e.g. 1920x860 or 1536x740),
+ * the 6-card Hero Fan never grows too tall vertically to collide with "The Ultimate COLLECTIONS"
+ * while still scaling proportionally with the screen width.
  */
-export function getResponsiveScale(viewportWidth: number): number {
-  if (viewportWidth <= 640) return clamp(viewportWidth / 520, 0.55, 0.78);
-  if (viewportWidth <= 1024) return clamp(viewportWidth / 1180, 0.68, 0.9);
-  return clamp(viewportWidth / 1360, 0.85, 1.12);
+export function getResponsiveScale(
+  viewportWidth: number,
+  viewportHeight = 900
+): number {
+  if (viewportWidth <= 640) {
+    const wScale = clamp(viewportWidth / 820, 0.42, 0.64);
+    const hScale = clamp(viewportHeight / 780, 0.45, 0.85);
+    return Math.min(wScale, hScale);
+  }
+  if (viewportWidth <= 1024) {
+    const wScale = clamp(viewportWidth / 1180, 0.64, 0.9);
+    const hScale = clamp(viewportHeight / 820, 0.66, 0.95);
+    return Math.min(wScale, hScale);
+  }
+  const widthScale = clamp(viewportWidth / 1380, 0.82, 1.85);
+  const heightScale = clamp(viewportHeight / 810, 0.78, 1.85);
+  // Blend width & height constraints so cards never overflow vertically on 16:9 browser viewports
+  return Math.min(widthScale, heightScale * 1.06);
+}
+
+/**
+ * Computes horizontal spread scale so that on mobile all 6 cards fit inside the viewport,
+ * and on wide screens the 6 cards fill the width proportionally without vertical collision.
+ */
+export function getHorizontalSpreadScale(
+  viewportWidth: number,
+  viewportHeight = 900
+): number {
+  const baseScale = getResponsiveScale(viewportWidth, viewportHeight);
+  if (viewportWidth <= 640) {
+    const cardW = 200 * baseScale;
+    const maxCenterSpan = Math.max(200, viewportWidth - cardW - 24);
+    return clamp(maxCenterSpan / 920, 0.24, 0.56);
+  }
+  if (viewportWidth <= 1024) {
+    const cardW = 200 * baseScale;
+    const maxCenterSpan = Math.max(480, viewportWidth - cardW - 48);
+    return clamp(maxCenterSpan / 920, 0.52, 0.9);
+  }
+  const widthRatio = clamp(viewportWidth / 1380, 0.85, 1.85);
+  // Allow horizontal spread to track screen width slightly more than vertical height on wide aspect ratios
+  return lerp(baseScale, widthRatio, 0.38);
 }
 
 /**
@@ -73,16 +114,20 @@ export function computeHeroToShowcaseTransform(
   product: ProductItem,
   introPhase: 'stack-enter' | 'stack-rise' | 'stack-shuffle' | 'ready',
   heroScrollProgress: number,
-  viewportWidth: number
+  viewportWidth: number,
+  viewportHeight = 900
 ): CardTransform {
-  const scaleFactor = getResponsiveScale(viewportWidth);
+  const scaleFactor = getResponsiveScale(viewportWidth, viewportHeight);
+  const spreadScale = getHorizontalSpreadScale(viewportWidth, viewportHeight);
   const idx = product.index;
+  const isMobile = viewportWidth < 768;
 
   // Base dimensions in Hero Fan ("The Ultimate COLLECTIONS")
-  const heroW = Math.round(204 * scaleFactor);
-  const heroH = Math.round(246 * scaleFactor);
-  const heroX = Math.round(product.heroFan.xOffset * scaleFactor);
-  const heroY = Math.round(product.heroFan.yOffset * scaleFactor);
+  // Slight downward offset (+14 * scaleFactor) gives clean breathing room below "COLLECTIONS"
+  const heroW = Math.round(200 * scaleFactor);
+  const heroH = Math.round(240 * scaleFactor);
+  const heroX = Math.round(product.heroFan.xOffset * spreadScale);
+  const heroY = Math.round((product.heroFan.yOffset + 14) * scaleFactor);
   const heroRot = product.heroFan.rotate;
 
   // 1. Intro phases: cards start stacked at the bottom of the screen and rise up into center stack
@@ -90,13 +135,13 @@ export function computeHeroToShowcaseTransform(
     return {
       x: product.stackOrder.initialX,
       y: Math.round(420 * scaleFactor) + product.stackOrder.initialY,
-      width: Math.round(234 * scaleFactor),
-      height: Math.round(278 * scaleFactor),
+      width: Math.round(228 * scaleFactor),
+      height: Math.round(270 * scaleFactor),
       rotate: product.stackOrder.initialRotate,
       scale: 0.94,
       opacity: 1,
       zIndex: product.stackOrder.initialZ,
-      borderRadius: 26,
+      borderRadius: Math.round(24 * scaleFactor),
       showBuyNow: idx === 3,
       showMeta: false,
       metaOpacity: 0,
@@ -107,13 +152,13 @@ export function computeHeroToShowcaseTransform(
     return {
       x: product.stackOrder.initialX,
       y: 26 + product.stackOrder.initialY,
-      width: Math.round(234 * scaleFactor),
-      height: Math.round(278 * scaleFactor),
+      width: Math.round(228 * scaleFactor),
+      height: Math.round(270 * scaleFactor),
       rotate: product.stackOrder.initialRotate,
       scale: 1,
       opacity: 1,
       zIndex: product.stackOrder.initialZ,
-      borderRadius: 26,
+      borderRadius: Math.round(24 * scaleFactor),
       showBuyNow: idx === 3,
       showMeta: false,
       metaOpacity: 0,
@@ -125,13 +170,13 @@ export function computeHeroToShowcaseTransform(
     return {
       x: isCard1 ? 0 : product.stackOrder.initialX * 1.15,
       y: 22 + (isCard1 ? 0 : product.stackOrder.initialY),
-      width: Math.round(234 * scaleFactor),
-      height: Math.round(278 * scaleFactor),
+      width: Math.round(228 * scaleFactor),
+      height: Math.round(270 * scaleFactor),
       rotate: isCard1 ? -2.2 : product.stackOrder.initialRotate * 1.1,
       scale: isCard1 ? 1.02 : 0.99,
       opacity: 1,
       zIndex: isCard1 ? 70 : product.stackOrder.initialZ,
-      borderRadius: 26,
+      borderRadius: Math.round(24 * scaleFactor),
       showBuyNow: isCard1,
       showMeta: false,
       metaOpacity: 0,
@@ -149,7 +194,7 @@ export function computeHeroToShowcaseTransform(
       scale: 1,
       opacity: 1,
       zIndex: product.heroFan.zIndex,
-      borderRadius: 24,
+      borderRadius: Math.round(24 * scaleFactor),
       showBuyNow: true,
       showMeta: false,
       metaOpacity: 0,
@@ -157,22 +202,20 @@ export function computeHeroToShowcaseTransform(
   }
 
   // Midpoint (0.40): Compact center stack (matches 00:04 in Klickpin video)
-  const stackW = Math.round(208 * scaleFactor);
-  const stackH = Math.round(244 * scaleFactor);
+  const stackW = Math.round(204 * scaleFactor);
+  const stackH = Math.round(240 * scaleFactor);
   const stackX = Math.round((idx - 2.5) * 4 * scaleFactor);
   const stackY = Math.round((idx - 2.5) * 3 * scaleFactor);
   const stackRot = (idx - 2.5) * 2.8;
 
   // Endpoint (1.00): 5-card diagonal stair-step cascade on the right side (matches 00:05-00:06 in Klickpin video)
-  // Cards 0..4 form the 5 visible diagonal steps from upper-center-right to bottom-right; Card 5 tucks cleanly behind Card 4
   const cascadeSlot = Math.min(idx, 4);
-  const isMobile = viewportWidth < 768;
-  const cascadeBaseX = isMobile ? -95 : 82;
-  const cascadeStepX = isMobile ? 48 : 96;
-  const cascadeBaseY = isMobile ? -55 : -108;
-  const cascadeStepY = isMobile ? 38 : 54;
+  const cascadeBaseX = isMobile ? -80 : 86;
+  const cascadeStepX = isMobile ? 42 : 96;
+  const cascadeBaseY = isMobile ? 55 : -106;
+  const cascadeStepY = isMobile ? 28 : 54;
 
-  const cascadeX = Math.round((cascadeBaseX + cascadeSlot * cascadeStepX) * scaleFactor);
+  const cascadeX = Math.round((cascadeBaseX + cascadeSlot * cascadeStepX) * spreadScale);
   const cascadeY = Math.round((cascadeBaseY + cascadeSlot * cascadeStepY) * scaleFactor);
   const cascadeW = Math.round(176 * scaleFactor);
   const cascadeH = Math.round(202 * scaleFactor);
@@ -188,7 +231,7 @@ export function computeHeroToShowcaseTransform(
       scale: 1,
       opacity: 1,
       zIndex: t > 0.5 ? 60 - idx * 5 : product.heroFan.zIndex,
-      borderRadius: 24,
+      borderRadius: Math.round(24 * scaleFactor),
       showBuyNow: t < 0.35,
       showMeta: false,
       metaOpacity: 0,
@@ -207,7 +250,7 @@ export function computeHeroToShowcaseTransform(
     scale: 1,
     opacity: targetOpacity,
     zIndex: 30 + idx * 5,
-    borderRadius: lerp(24, 22, t2),
+    borderRadius: Math.round(lerp(24, 22, t2) * scaleFactor),
     showBuyNow: false,
     showMeta: false,
     metaOpacity: 0,
@@ -222,24 +265,26 @@ export function computeCardTransform(
   introPhase: 'stack-enter' | 'stack-rise' | 'stack-shuffle' | 'ready',
   scrollProgress: number,
   selectedProductIndex: number,
-  viewportWidth: number
+  viewportWidth: number,
+  viewportHeight = 900
 ): CardTransform {
-  const scaleFactor = getResponsiveScale(viewportWidth);
+  const scaleFactor = getResponsiveScale(viewportWidth, viewportHeight);
+  const spreadScale = getHorizontalSpreadScale(viewportWidth, viewportHeight);
   const idx = product.index;
 
   // Base dimensions in Hero Fan
-  const heroW = Math.round(204 * scaleFactor);
-  const heroH = Math.round(246 * scaleFactor);
-  const heroX = Math.round(product.heroFan.xOffset * scaleFactor);
-  const heroY = Math.round(product.heroFan.yOffset * scaleFactor);
+  const heroW = Math.round(200 * scaleFactor);
+  const heroH = Math.round(240 * scaleFactor);
+  const heroX = Math.round(product.heroFan.xOffset * spreadScale);
+  const heroY = Math.round((product.heroFan.yOffset + 14) * scaleFactor);
   const heroRot = product.heroFan.rotate;
 
   if (introPhase === 'stack-enter') {
     return {
       x: product.stackOrder.initialX,
       y: Math.round(420 * scaleFactor) + product.stackOrder.initialY,
-      width: Math.round(234 * scaleFactor),
-      height: Math.round(278 * scaleFactor),
+      width: Math.round(228 * scaleFactor),
+      height: Math.round(270 * scaleFactor),
       rotate: product.stackOrder.initialRotate,
       scale: 0.94,
       opacity: 1,
@@ -255,8 +300,8 @@ export function computeCardTransform(
     return {
       x: product.stackOrder.initialX,
       y: 26 + product.stackOrder.initialY,
-      width: Math.round(234 * scaleFactor),
-      height: Math.round(278 * scaleFactor),
+      width: Math.round(228 * scaleFactor),
+      height: Math.round(270 * scaleFactor),
       rotate: product.stackOrder.initialRotate,
       scale: 1,
       opacity: 1,
@@ -273,8 +318,8 @@ export function computeCardTransform(
     return {
       x: isCard1 ? 0 : product.stackOrder.initialX * 1.15,
       y: 22 + (isCard1 ? 0 : product.stackOrder.initialY),
-      width: Math.round(234 * scaleFactor),
-      height: Math.round(278 * scaleFactor),
+      width: Math.round(228 * scaleFactor),
+      height: Math.round(270 * scaleFactor),
       rotate: isCard1 ? -2.2 : product.stackOrder.initialRotate * 1.1,
       scale: isCard1 ? 1.02 : 0.99,
       opacity: 1,
