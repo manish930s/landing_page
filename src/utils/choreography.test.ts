@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { PRODUCTS } from '../data/products';
 import {
   computeCardTransform,
+  computeHeroToShowcaseTransform,
   addItemToCart,
   getCartTotalCount,
   getCartSubtotal,
@@ -37,6 +38,18 @@ test('hero-fan spreads all 6 cards left-to-right with tilted rotations', () => {
   assert.ok(transforms[0].rotate < 0, 'Left cards should tilt counter-clockwise');
   assert.ok(transforms[5].rotate > 0, 'Right cards should tilt clockwise');
   assert.equal(transforms[0].showMeta, false, 'Product metadata is hidden in Hero Fan');
+});
+
+test('computeHeroToShowcaseTransform gathers Hero Fan into center stack at 0.40 and fans into right diagonal cascade at 1.0', () => {
+  const hero0 = computeHeroToShowcaseTransform(PRODUCTS[0], 'ready', 0, 1360);
+  const stack0 = computeHeroToShowcaseTransform(PRODUCTS[0], 'ready', 0.4, 1360);
+  const cascade0 = computeHeroToShowcaseTransform(PRODUCTS[0], 'ready', 1.0, 1360);
+  const cascade4 = computeHeroToShowcaseTransform(PRODUCTS[4], 'ready', 1.0, 1360);
+
+  assert.ok(hero0.x < -300, 'Card 0 starts on far left in Hero Fan');
+  assert.ok(Math.abs(stack0.x) < 25, 'Card 0 gathers near center x=0 at progress 0.4');
+  assert.ok(cascade4.x > cascade0.x, 'Cascade cards step rightward from card 0 to card 4');
+  assert.ok(cascade4.y > cascade0.y, 'Cascade cards step downward from card 0 to card 4');
 });
 
 test('best-selling stage un-rotates cards and makes Winter Cloths (1) & Woolan Fashion (3) taller', () => {

@@ -3,6 +3,7 @@ import { motion } from 'motion/react';
 
 interface NavbarProps {
   isVisible: boolean;
+  isScrolled?: boolean;
   activeSection: 'home' | 'product' | 'detail' | 'contact';
   cartCount: number;
   onNavigate: (target: 'home' | 'product' | 'detail' | 'contact') => void;
@@ -12,6 +13,7 @@ interface NavbarProps {
 
 export const Navbar: React.FC<NavbarProps> = ({
   isVisible,
+  isScrolled = false,
   activeSection,
   cartCount,
   onNavigate,
@@ -21,7 +23,11 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <header
       aria-hidden={!isVisible}
-      className="fixed top-0 left-0 right-0 z-50 px-8 md:px-16 py-6 pointer-events-none"
+      className={`fixed top-0 left-0 right-0 z-50 px-8 md:px-16 transition-all duration-300 pointer-events-none ${
+        isScrolled && isVisible
+          ? 'py-4 bg-white/88 backdrop-blur-md border-b border-zinc-100/80'
+          : 'py-6 bg-transparent'
+      }`}
     >
       <div className="max-w-[1440px] mx-auto flex items-center justify-between gap-8">
         {/* Zone 1: Brand Wordmark */}

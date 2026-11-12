@@ -60,24 +60,25 @@ export function getResponsiveScale(viewportWidth: number): number {
 }
 
 /**
- * Computes exact card transform for any stage or continuous scroll progress.
- * scrollProgress is normalized [0..1] across the main scroll container:
- *   0.00           -> hero-fan ("The Ultimate COLLECTIONS")
- *   0.38 .. 0.48   -> best-selling ("Best Selling Product Of The COLLECTION")
- *   0.52 .. 0.65   -> best-selling-shifted (horizontal carousel shift left)
- *   0.85 .. 1.00   -> product-detail ("WOOLAN FASHION" detail morph)
+ * Computes the Hero -> Showcase Cascade card transform for the pinned top stage.
+ * - introPhase !== 'ready':
+ *   Exact bottom-up card rise -> center stack -> shuffle (untouched).
+ * - introPhase === 'ready':
+ *   heroScrollProgress = 0.00 -> Exact "The Ultimate COLLECTIONS" 6-card Hero Fan (untouched).
+ *   heroScrollProgress = 0.42 -> Cards gather into a center stack as Hero text scrolls out (00:04 of video).
+ *   heroScrollProgress = 1.00 -> Cards fan out into the 5-card diagonal stair-step cascade on the right side
+ *                                alongside "Showcase, Sell, & acquire arts to our marketplace." (00:05-00:06).
  */
-export function computeCardTransform(
+export function computeHeroToShowcaseTransform(
   product: ProductItem,
   introPhase: 'stack-enter' | 'stack-rise' | 'stack-shuffle' | 'ready',
-  scrollProgress: number,
-  selectedProductIndex: number,
+  heroScrollProgress: number,
   viewportWidth: number
 ): CardTransform {
   const scaleFactor = getResponsiveScale(viewportWidth);
   const idx = product.index;
 
-  // Base dimensions in Hero Fan
+  // Base dimensions in Hero Fan ("The Ultimate COLLECTIONS")
   const heroW = Math.round(204 * scaleFactor);
   const heroH = Math.round(246 * scaleFactor);
   const heroX = Math.round(product.heroFan.xOffset * scaleFactor);
@@ -103,7 +104,6 @@ export function computeCardTransform(
   }
 
   if (introPhase === 'stack-rise') {
-    // Stacked tightly in the center after rising from bottom, Card 4 (index 3) on top
     return {
       x: product.stackOrder.initialX,
       y: 26 + product.stackOrder.initialY,
@@ -121,7 +121,6 @@ export function computeCardTransform(
   }
 
   if (introPhase === 'stack-shuffle') {
-    // Card 1 (index 0) flips to the top of the center stack
     const isCard1 = idx === 0;
     return {
       x: isCard1 ? 0 : product.stackOrder.initialX * 1.15,
@@ -139,25 +138,163 @@ export function computeCardTransform(
     };
   }
 
-  // 2. Ready state: interpolate across scrollProgress [0..1]
-  // Stage A (0.00 -> 0.36): Hero Fan -> Best Selling Row
-  // Stage B (0.36 -> 0.62): Best Selling Row -> Best Selling Carousel Shifted Left
-  // Stage C (0.62 -> 0.94): Best Selling Shifted -> Product Detail Morph
+  // 2. Ready state at top of page (heroScrollProgress <= 0.02): Exact Hero Fan
+  if (heroScrollProgress <= 0.02) {
+    return {
+      x: heroX,
+      y: heroY,
+      width: heroW,
+      height: heroH,
+      rotate: heroRot,
+      scale: 1,
+      opacity: 1,
+      zIndex: product.heroFan.zIndex,
+      borderRadius: 24,
+      showBuyNow: true,
+      showMeta: false,
+      metaOpacity: 0,
+    };
+  }
 
-  // Best Selling Row geometry:
-  // 6 cards laid out horizontally with uniform gap, un-rotated (0deg).
-  // Cards 1 (idx 1) and 3 (idx 3) are taller ("Winter Cloths" and "Woolan Fashion").
+  // Midpoint (0.40): Compact center stack (matches 00:04 in Klickpin video)
+  const stackW = Math.round(208 * scaleFactor);
+  const stackH = Math.round(244 * scaleFactor);
+  const stackX = Math.round((idx - 2.5) * 4 * scaleFactor);
+  const stackY = Math.round((idx - 2.5) * 3 * scaleFactor);
+  const stackRot = (idx - 2.5) * 2.8;
+
+  // Endpoint (1.00): 5-card diagonal stair-step cascade on the right side (matches 00:05-00:06 in Klickpin video)
+  // Cards 0..4 form the 5 visible diagonal steps from upper-center-right to bottom-right; Card 5 tucks cleanly behind Card 4
+  const cascadeSlot = Math.min(idx, 4);
+  const isMobile = viewportWidth < 768;
+  const cascadeBaseX = isMobile ? -95 : 82;
+  const cascadeStepX = isMobile ? 48 : 96;
+  const cascadeBaseY = isMobile ? -55 : -108;
+  const cascadeStepY = isMobile ? 38 : 54;
+
+  const cascadeX = Math.round((cascadeBaseX + cascadeSlot * cascadeStepX) * scaleFactor);
+  const cascadeY = Math.round((cascadeBaseY + cascadeSlot * cascadeStepY) * scaleFactor);
+  const cascadeW = Math.round(176 * scaleFactor);
+  const cascadeH = Math.round(202 * scaleFactor);
+
+  if (heroScrollProgress <= 0.42) {
+    const t = smoothstep(0.02, 0.40, heroScrollProgress);
+    return {
+      x: lerp(heroX, stackX, t),
+      y: lerp(heroY, stackY, t),
+      width: lerp(heroW, stackW, t),
+      height: lerp(heroH, stackH, t),
+      rotate: lerp(heroRot, stackRot, t),
+      scale: 1,
+      opacity: 1,
+      zIndex: t > 0.5 ? 60 - idx * 5 : product.heroFan.zIndex,
+      borderRadius: 24,
+      showBuyNow: t < 0.35,
+      showMeta: false,
+      metaOpacity: 0,
+    };
+  }
+
+  const t2 = smoothstep(0.42, 0.92, heroScrollProgress);
+  const targetOpacity = idx === 5 ? lerp(1, 0, smoothstep(0.5, 0.85, heroScrollProgress)) : 1;
+
+  return {
+    x: lerp(stackX, cascadeX, t2),
+    y: lerp(stackY, cascadeY, t2),
+    width: lerp(stackW, cascadeW, t2),
+    height: lerp(stackH, cascadeH, t2),
+    rotate: lerp(stackRot, 0, t2),
+    scale: 1,
+    opacity: targetOpacity,
+    zIndex: 30 + idx * 5,
+    borderRadius: lerp(24, 22, t2),
+    showBuyNow: false,
+    showMeta: false,
+    metaOpacity: 0,
+  };
+}
+
+/**
+ * Computes exact card transform for any stage or continuous scroll progress.
+ */
+export function computeCardTransform(
+  product: ProductItem,
+  introPhase: 'stack-enter' | 'stack-rise' | 'stack-shuffle' | 'ready',
+  scrollProgress: number,
+  selectedProductIndex: number,
+  viewportWidth: number
+): CardTransform {
+  const scaleFactor = getResponsiveScale(viewportWidth);
+  const idx = product.index;
+
+  // Base dimensions in Hero Fan
+  const heroW = Math.round(204 * scaleFactor);
+  const heroH = Math.round(246 * scaleFactor);
+  const heroX = Math.round(product.heroFan.xOffset * scaleFactor);
+  const heroY = Math.round(product.heroFan.yOffset * scaleFactor);
+  const heroRot = product.heroFan.rotate;
+
+  if (introPhase === 'stack-enter') {
+    return {
+      x: product.stackOrder.initialX,
+      y: Math.round(420 * scaleFactor) + product.stackOrder.initialY,
+      width: Math.round(234 * scaleFactor),
+      height: Math.round(278 * scaleFactor),
+      rotate: product.stackOrder.initialRotate,
+      scale: 0.94,
+      opacity: 1,
+      zIndex: product.stackOrder.initialZ,
+      borderRadius: 26,
+      showBuyNow: idx === 3,
+      showMeta: false,
+      metaOpacity: 0,
+    };
+  }
+
+  if (introPhase === 'stack-rise') {
+    return {
+      x: product.stackOrder.initialX,
+      y: 26 + product.stackOrder.initialY,
+      width: Math.round(234 * scaleFactor),
+      height: Math.round(278 * scaleFactor),
+      rotate: product.stackOrder.initialRotate,
+      scale: 1,
+      opacity: 1,
+      zIndex: product.stackOrder.initialZ,
+      borderRadius: 26,
+      showBuyNow: idx === 3,
+      showMeta: false,
+      metaOpacity: 0,
+    };
+  }
+
+  if (introPhase === 'stack-shuffle') {
+    const isCard1 = idx === 0;
+    return {
+      x: isCard1 ? 0 : product.stackOrder.initialX * 1.15,
+      y: 22 + (isCard1 ? 0 : product.stackOrder.initialY),
+      width: Math.round(234 * scaleFactor),
+      height: Math.round(278 * scaleFactor),
+      rotate: isCard1 ? -2.2 : product.stackOrder.initialRotate * 1.1,
+      scale: isCard1 ? 1.02 : 0.99,
+      opacity: 1,
+      zIndex: isCard1 ? 70 : product.stackOrder.initialZ,
+      borderRadius: 26,
+      showBuyNow: isCard1,
+      showMeta: false,
+      metaOpacity: 0,
+    };
+  }
+
   const gridCardW = Math.round(202 * scaleFactor);
   const gridGap = Math.round(26 * scaleFactor);
   const gridPitch = gridCardW + gridGap;
-  // In initial Best Selling frame (frame_030), Card 0 starts near left margin and Card 5 is partially off right edge
   const gridBaseX = Math.round((-2.15 + idx) * gridPitch);
-  const gridShiftedX = Math.round((-2.85 + idx) * gridPitch); // shifted left so Card 5 is fully visible (frame_038)
+  const gridShiftedX = Math.round((-2.85 + idx) * gridPitch);
 
   const gridCardH = product.isTallInGrid
     ? Math.round(288 * scaleFactor)
     : Math.round(236 * scaleFactor);
-  // Align bottom edges of all cards so tall cards rise upward, matching frame_030!
   const gridCardY = product.isTallInGrid
     ? Math.round(-26 * scaleFactor)
     : 0;
@@ -199,12 +336,10 @@ export function computeCardTransform(
     };
   }
 
-  // Stage C (0.62 -> 1.00): Morph from Best Selling Shifted into Product Detail View
   const detailT = smoothstep(0.64, 0.92, scrollProgress);
   const metaFadeOut = 1 - smoothstep(0.62, 0.74, scrollProgress);
 
   const isSelected = idx === selectedProductIndex;
-  // Target geometry for the selected card on the left of the Product Detail View (matching frame_050)
   const detailW = viewportWidth < 768
     ? Math.round(Math.min(viewportWidth - 48, 360))
     : Math.round(460 * scaleFactor);
@@ -235,7 +370,6 @@ export function computeCardTransform(
     };
   }
 
-  // Non-selected cards slide cleanly outward horizontally (left cards go left, right cards go right)
   const direction = idx < selectedProductIndex ? -1 : 1;
   const distanceIndex = Math.abs(idx - selectedProductIndex);
   const offscreenX =
@@ -302,7 +436,6 @@ export function getCartSubtotal(cart: CartItem[]): number {
 }
 
 export function getInitialCart(): CartItem[] {
-  // Matches the "2" badge on the shopping bag in the reference video!
   return [
     {
       productId: PRODUCTS[3].id,

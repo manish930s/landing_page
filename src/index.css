@@ -16,6 +16,19 @@
   }
 }
 
+@keyframes artMarquee {
+  0% {
+    transform: translate3d(0%, 0, 0);
+  }
+  100% {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.animate-art-marquee {
+  animation: artMarquee 22s linear infinite;
+}
+
 ::-webkit-scrollbar {
   width: 6px;
 }
