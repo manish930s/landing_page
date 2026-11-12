@@ -1,0 +1,6 @@
+{
+  "name": "Fashion. — The Ultimate Collections",
+  "description": "Interactive streetwear and modern fashion showcase featuring smooth card-stack choreography, scroll-triggered FLIP transitions, and seamless product detail morphing built with GSAP and Framer Motion.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
